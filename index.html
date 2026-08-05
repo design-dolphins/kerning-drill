@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kerning Drill — Question Bank</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Work+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #141412;
+    --paper: #EDEAE1;
+    --muted: #8A867C;
+    --accent: #E8A33D;
+    --rule: #2C2B27;
+    --card-bg: #1B1A17;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin: 0;
+    background: var(--bg);
+    color: var(--paper);
+    font-family: 'Work Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a{ color: inherit; }
+
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(28px, 6vw, 72px) clamp(20px, 5vw, 40px) 96px;
+  }
+
+  header.site{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 24px;
+    margin-bottom: 8px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .site h1{
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    letter-spacing: -0.01em;
+    margin: 0;
+    line-height: 1;
+  }
+
+  .site .meta{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: right;
+  }
+
+  .dot{
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  section.tier{
+    margin-top: 64px;
+  }
+
+  .tier-head{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .tier-head .label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--paper);
+  }
+
+  .tier-head .label .idx{
+    color: var(--accent);
+    margin-right: 10px;
+  }
+
+  .tier-head .label .jp{
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 8px;
+  }
+
+  .tier-head .sub{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  ul.grid{
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  ul.grid.wide{
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+
+  li.card{
+    background: var(--card-bg);
+    padding: 22px 16px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 92px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .word{
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 500;
+    font-size: clamp(1.05rem, 2.4vw, 1.5rem);
+    line-height: 1.15;
+    letter-spacing: 0;
+    transition: letter-spacing 0.4s ease;
+    white-space: nowrap;
+  }
+
+  li.card.long .word{
+    font-size: clamp(0.85rem, 1.8vw, 1.15rem);
+    white-space: normal;
+  }
+
+  li.card:hover .word{
+    letter-spacing: 0.02em;
+  }
+
+  .ch{
+    position: relative;
+    display: inline-block;
+  }
+
+  .ch::after{
+    content: '';
+    position: absolute;
+    left: calc(100% - 0.5px);
+    bottom: -8px;
+    width: 1px;
+    height: 6px;
+    background: var(--accent);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    transition-delay: calc(var(--i, 0) * 18ms);
+  }
+
+  li.card:hover .ch::after{
+    opacity: 0.85;
+    transform: translateY(0);
+  }
+
+  .idxnum{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    letter-spacing: 0.04em;
+  }
+
+  footer.site{
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .state{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 40px 0;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .word, .ch::after{ transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="site">
+    <h1><span class="dot"></span>Kerning Drill</h1>
+    <div class="meta">Question Bank<br>4 Tiers</div>
+  </header>
+
+  <div id="content">
+    <p class="state">読み込み中…</p>
+  </div>
+
+  <footer class="site">
+    <span>kerning-drill-question-bank.json</span>
+    <span id="count-total"></span>
+  </footer>
+
+</div>
+
+<script>
+  const TIERS = [
+    { key: 'beginner',     idx: '01', en: 'Beginner',     jp: '初級',   sub: '3文字' },
+    { key: 'intermediate', idx: '02', en: 'Intermediate', jp: '中級',   sub: '1単語' },
+    { key: 'advanced',     idx: '03', en: 'Advanced',     jp: '上級',   sub: '長い1単語' },
+    { key: 'expert',       idx: '04', en: 'Expert',       jp: '超上級', sub: '複数語' },
+  ];
+
+  function wrapChars(word){
+    return [...word].map((ch, i) => {
+      const safe = ch === ' ' ? '&nbsp;' : ch;
+      return `<span class="ch" style="--i:${i}">${safe}</span>`;
+    }).join('');
+  }
+
+  function render(data){
+    const content = document.getElementById('content');
+    content.innerHTML = '';
+    let total = 0;
+
+    TIERS.forEach(tier => {
+      const words = data[tier.key] || [];
+      total += words.length;
+
+      const section = document.createElement('section');
+      section.className = 'tier';
+
+      const isWide = tier.key === 'advanced' || tier.key === 'expert';
+
+      section.innerHTML = `
+        <div class="tier-head">
+          <div class="label"><span class="idx">${tier.idx}</span>${tier.en}<span class="jp">/ ${tier.jp}</span></div>
+          <div class="sub">${words.length} words &middot; ${tier.sub}</div>
+        </div>
+        <ul class="grid${isWide ? ' wide' : ''}">
+          ${words.map((w, i) => `
+            <li class="card${w.length > 12 ? ' long' : ''}">
+              <span class="idxnum">${String(i + 1).padStart(2, '0')}</span>
+              <span class="word">${wrapChars(w)}</span>
+            </li>
+          `).join('')}
+        </ul>
+      `;
+
+      content.appendChild(section);
+    });
+
+    document.getElementById('count-total').textContent = `${total} words total`;
+  }
+
+  fetch('./kerning-drill-question-bank.json')
+    .then(res => {
+      if (!res.ok) throw new Error('failed to load');
+      return res.json();
+    })
+    .then(render)
+    .catch(() => {
+      document.getElementById('content').innerHTML =
+        '<p class="state">データを読み込めませんでした。kerning-drill-question-bank.json が同じフォルダにあるか確認してください。</p>';
+    });
+</script>
+
+</body>
+</html>
