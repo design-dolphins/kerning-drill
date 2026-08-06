@@ -30,7 +30,7 @@ const seedDrills: Drill[] = [
   { text:"Tokyo Coffee Stand", level:"超上級", pairs:[{left:"T",right:"o",target:-48,note:notes.tbar,kind:"tbar"},{left:"o",right:"k",target:-4,note:notes.round,kind:"round"},{left:"o",right:" ",target:105,note:notes.space,kind:"space"},{left:" ",right:"C",target:85,note:notes.space,kind:"space"},{left:"e",right:"e",target:-4,note:notes.round,kind:"round"},{left:"e",right:" ",target:108,note:notes.space,kind:"space"},{left:" ",right:"S",target:88,note:notes.space,kind:"space"}] }
 ];
 
-const targetByPair: Record<string, number> = { AV:-78, VA:-72, AW:-30, WA:-42, TA:-62, AT:-18, To:-48, TY:-38, Yo:-58, YA:-45, VE:-32, VO:-38, VA:-72, LA:-18, LO:-18, OT:-22, TO:-35, WO:-22, OW:-18, PA:-12, RA:-18, " ":95 };
+const targetByPair: Record<string, number> = { AV:-78, VA:-72, AW:-30, WA:-42, TA:-62, AT:-18, To:-48, TY:-38, Yo:-58, YA:-45, VE:-32, VO:-38, LA:-18, LO:-18, OT:-22, TO:-35, WO:-22, OW:-18, PA:-12, RA:-18, " ":95 };
 const diagonal = new Set(["A","V","W","Y"]);
 const tbar = new Set(["T"]);
 const round = new Set(["O","o","C","c","G","g","Q","q","D","d","e"]);

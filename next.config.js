@@ -1,8 +1,9 @@
-const isGitHubPages = process.env.GITHUB_ACTIONS === "true";
-
-module.exports = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   output: "export",
-  basePath: isGitHubPages ? "/kerning-drill" : "",
-  assetPrefix: isGitHubPages ? "/kerning-drill/" : "",
+  basePath: process.env.GITHUB_ACTIONS === "true" ? "/kerning-drill" : "",
+  assetPrefix: process.env.GITHUB_ACTIONS === "true" ? "/kerning-drill/" : "",
   trailingSlash: true,
 };
+
+module.exports = nextConfig;
