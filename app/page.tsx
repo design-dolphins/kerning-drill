@@ -194,7 +194,7 @@ export default function KerningDrill() {
   useEffect(() => { const handler=(e:KeyboardEvent)=>{ if(screen!=="drill" || !["ArrowLeft","ArrowRight"].includes(e.key)) return; e.preventDefault(); if(e.altKey) { update(selected, values[selected]+(e.key==="ArrowLeft"?-10:10)); return; } const direction=e.key==="ArrowLeft"?-1:1; setCaretVisible(true); setSelected(current => { let next=current+direction; while(next>=0 && next<values.length && isFixedSpace(next)) next+=direction; return Math.max(-1,Math.min(values.length,next)); }); }; window.addEventListener("keydown",handler); return()=>window.removeEventListener("keydown",handler); });
   useEffect(() => {
     if (screen !== "drill" || !caretVisible) return;
-    const timer = window.setTimeout(() => setCaretVisible(false), 3000);
+    const timer = window.setTimeout(() => setCaretVisible(false), 2000);
     return () => window.clearTimeout(timer);
   }, [screen, selected, values, caretVisible]);
   const submit = () => { const entry = { drill, values, accuracy, date: localDateKey() }; setHistory(h => { const next = [...h, entry]; try { window.localStorage.setItem("kerning-drill-history", JSON.stringify(next)); } catch { /* 保存できない環境では画面内の履歴を使う */ } return next; }); setScreen("result"); };
