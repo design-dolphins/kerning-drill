@@ -55,7 +55,7 @@ const japaneseDrills: Drill[] = [
 ];
 const levelOrder: Level[] = ["初級", "中級", "上級", "超上級"];
 const chooseThree = (pool: Drill[]) => [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
-const randomInitialKerning = () => Math.round((Math.random() * 100 - 50) / 5) * 5;
+const randomInitialKerning = () => Math.round((Math.random() * 50) / 5) * 5;
 
 const englishFonts = ["Lato", "Poppins", "Libre Baskerville", "Albert Sans"];
 const japaneseFonts = ["Noto Sans JP", "Zen Kaku Gothic New", "BIZ UDPMincho", "Shippori Mincho"];
