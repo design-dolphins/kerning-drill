@@ -8,6 +8,7 @@ type DrillChoice = "おまかせ" | Level;
 type Language = "英語" | "日本語";
 type Pair = { index?: number; left: string; right: string; target: number; note: string; kind: "diagonal" | "round" | "tbar" | "kana" | "kanji" | "space" | "other" };
 type Drill = { text: string; level: Level; pairs: Pair[] };
+type HistoryEntry = { drill: Drill; values: number[]; accuracy: number; date: string };
 
 const notes: Record<Pair["kind"], string> = {
   diagonal: "斜線同士には三角形の余白が生まれます。見かけの空白が均一になるまで、標準よりしっかり詰めます。",
@@ -56,6 +57,7 @@ const japaneseDrills: Drill[] = [
 const levelOrder: Level[] = ["初級", "中級", "上級", "超上級"];
 const chooseThree = (pool: Drill[]) => [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
 const randomInitialKerning = () => Math.round((Math.random() * 50) / 5) * 5;
+const localDateKey = () => { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`; };
 
 const englishFonts = ["Lato", "Poppins", "Libre Baskerville", "Albert Sans"];
 const japaneseFonts = ["Noto Sans JP", "Zen Kaku Gothic New", "BIZ UDPMincho", "Shippori Mincho"];
@@ -89,7 +91,7 @@ export default function KerningDrill() {
   const [selected, setSelected] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [comparison, setComparison] = useState(0);
-  const [history, setHistory] = useState<{ drill: Drill; values:number[]; accuracy:number }[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [customTargets, setCustomTargets] = useState<Record<string, number[]>>({});
   const [caretVisible, setCaretVisible] = useState(false);
   const drag = useRef<{x:number; value:number} | null>(null);
@@ -103,7 +105,7 @@ export default function KerningDrill() {
       const saved = window.localStorage.getItem("kerning-drill-custom-targets");
       if (saved) setCustomTargets(JSON.parse(saved));
       const savedHistory = window.localStorage.getItem("kerning-drill-history");
-      if (savedHistory) setHistory(JSON.parse(savedHistory));
+      if (savedHistory) setHistory(JSON.parse(savedHistory).map((entry: HistoryEntry) => ({ ...entry, date: entry.date ?? localDateKey() })));
     } catch { /* 保存できない環境では通常の正解を使う */ }
   }, []);
   const init = (next: Drill) => {
@@ -170,7 +172,7 @@ export default function KerningDrill() {
     const timer = window.setTimeout(() => setCaretVisible(false), 3000);
     return () => window.clearTimeout(timer);
   }, [screen, selected, values, caretVisible]);
-  const submit = () => { const entry = { drill, values, accuracy }; setHistory(h => { const next = [...h, entry]; try { window.localStorage.setItem("kerning-drill-history", JSON.stringify(next)); } catch { /* 保存できない環境では画面内の履歴を使う */ } return next; }); setScreen("result"); };
+  const submit = () => { const entry = { drill, values, accuracy, date: localDateKey() }; setHistory(h => { const next = [...h, entry]; try { window.localStorage.setItem("kerning-drill-history", JSON.stringify(next)); } catch { /* 保存できない環境では画面内の履歴を使う */ } return next; }); setScreen("result"); };
   const goHome = () => { setScreen("home"); setShowAnswer(false); setCaretVisible(false); };
   const next = () => {
     if (choice === "おまかせ" && guidedIndex < guidedQueue.length - 1) {
@@ -184,6 +186,7 @@ export default function KerningDrill() {
   };
   const renderedValues = screen === "result" ? values.map((v,i)=> v+(targets[i]-v)*(comparison/100)) : values;
   const trouble = history.length ? ["斜線の組み合わせ", "T系の横棒", "右側を詰めすぎる傾向"].slice(0,Math.min(3,history.length+1)) : [];
+  const learningDay = Math.max(1, new Set(history.map(item => item.date)).size);
 
   return <main className="min-h-screen px-5 py-5 sm:px-10 sm:py-8">
     <header className="mx-auto flex max-w-6xl items-center border-b pb-4 hairline"><button onClick={goHome} aria-label="ホームへ戻る" className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-md bg-[#171719] text-sm font-semibold text-white">K</span><span className="text-[15px] font-medium tracking-[-.01em]">Kerning Drill</span></button></header>
@@ -196,7 +199,7 @@ export default function KerningDrill() {
         <div className="mt-7 max-w-xl"><p className="mb-3 text-xs font-medium text-[#6e6e73]">フォントを選ぶ</p><div className="flex flex-wrap gap-2">{availableFonts.map(item=><button key={item} onClick={()=>setFont(item)} style={{fontFamily:item}} className={`border px-4 py-2 text-sm hairline ${font===item ? "border-[#171719] bg-[#171719] text-white" : "bg-white text-[#505055]"}`}>{item}</button>)}</div><div className="mt-4"><p className="text-[11px] font-medium tracking-[.1em] text-[#6e6e73]">サンプル</p><p style={{fontFamily:font,fontKerning:"normal"}} className="mt-1 text-4xl leading-none tracking-[-.035em]">{language === "英語" ? "Abcdef" : "あいうえお"}</p></div><p className="mt-4 text-xs text-[#6e6e73]">初級 → 中級 → 上級 → 超上級を、各3問ずつ出題します。</p></div>
         <div className="mt-6 flex flex-wrap gap-3"><button onClick={()=>start("おまかせ")} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#3d3d3f]">ドリルを始める <span className="ml-5 text-[#b4b4b8]">⌘ ↵</span></button>{history.length > 0 && <button onClick={startReview} className="border px-5 py-3 text-sm font-medium hairline">苦手を復習</button>}</div>
       </div>
-      <div className="border-l pl-8 hairline"><p className="text-xs font-medium text-[#6e6e73]">今日のフォーカス</p><div className={`mt-7 text-7xl ${language === "英語" ? "font-[Georgia] tracking-[-.1em]" : "font-sans tracking-[-.04em]"}`}>{language === "英語" ? "AV" : "あさひ"}</div><p className="mt-7 text-sm leading-6 text-[#6e6e73]">{language === "英語" ? "斜線の間には、実際の距離より大きく見える三角形の空白があります。" : "ひらがなは曲線が多く、字形によって余白の見え方がゆっくり変化します。"}</p><div className="mt-12 border-t pt-5 hairline"><p className="text-xs text-[#6e6e73]">学習履歴</p><p className="mt-2 text-2xl tracking-[-.03em]">{history.length} <span className="text-sm text-[#6e6e73]">drills completed</span></p>{trouble.length>0&&<p className="mt-4 text-xs text-[#6e6e73]">復習候補：{trouble.join(" · ")}</p>}</div></div>
+      <div className="border-l pl-8 hairline"><p className="text-xs font-medium text-[#6e6e73]">今日のフォーカス</p><div className={`mt-7 text-7xl ${language === "英語" ? "font-[Georgia] tracking-[-.1em]" : "font-sans tracking-[-.04em]"}`}>{language === "英語" ? "AV" : "あさひ"}</div><p className="mt-7 text-sm leading-6 text-[#6e6e73]">{language === "英語" ? "斜線の間には、実際の距離より大きく見える三角形の空白があります。" : "ひらがなは曲線が多く、字形によって余白の見え方がゆっくり変化します。"}</p><div className="mt-12 border-t pt-5 hairline"><p className="text-xs text-[#6e6e73]">学習履歴</p><p className="mt-2 text-2xl tracking-[-.03em]">DAY {learningDay}</p>{trouble.length>0&&<p className="mt-4 text-xs text-[#6e6e73]">復習候補：{trouble.join(" · ")}</p>}</div></div>
     </section>}
     {screen !== "home" && <section className="mx-auto max-w-6xl py-9"><div className="flex items-center justify-between"><div><p className="text-xs font-medium tracking-[.12em] text-[#6e6e73]">{isReview ? "復習" : drill.level} · DRILL　{guidedIndex + 1}/{guidedQueue.length || 12}</p><h2 className="mt-1 text-xl font-medium tracking-[-.03em]">余白を見ながら、文字を選択</h2></div><p className="text-xs text-[#6e6e73]">フォント　<span className="text-[#171719]">{font}</span></p></div>
       <div className="mt-8 min-h-[390px] border-y py-16 hairline"><div className="overflow-x-auto px-2 text-center"><div className="relative inline-block text-left"><KerningText text={drill.text} values={renderedValues} font={font} selected={selected} onSelect={activatePair} drag={drag} update={update} isFixedSpace={isFixedSpace} caretVisible={caretVisible} faded={screen==="result" && comparison>0} />{screen==="result" && <div className="pointer-events-none absolute left-0 top-0 opacity-85"><KerningText text={drill.text} values={targets} font={font} selected={-1} onSelect={()=>{}} drag={drag} update={()=>{}} isFixedSpace={isFixedSpace} caretVisible={false} blue /></div>}</div></div></div>
