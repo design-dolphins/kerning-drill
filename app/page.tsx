@@ -41,7 +41,31 @@ const round = new Set(["O","o","C","c","G","g","Q","q","D","d","e"]);
 const hiragana = /[ぁ-ゖ]/;
 const kanji = /[一-龠々]/;
 const classify = (left:string,right:string): Pair["kind"] => left === " " || right === " " ? "space" : kanji.test(left) || kanji.test(right) ? "kanji" : hiragana.test(left) || hiragana.test(right) ? "kana" : tbar.has(left) ? "tbar" : diagonal.has(left) || diagonal.has(right) ? "diagonal" : round.has(left) || round.has(right) ? "round" : "other";
-const createDrill = (text:string, level:Level): Drill => ({ text, level, pairs:Array.from({length:text.length-1},(_,index) => { const left=text[index], right=text[index+1], kind=classify(left,right); const pair=left+right; const fallback=kind === "space" ? 95 : kind === "diagonal" ? -24 : kind === "tbar" ? -28 : kind === "round" ? -8 : kind === "kana" ? -10 : kind === "kanji" ? -6 : 0; return { index,left,right,target:targetByPair[pair] ?? fallback,note:notes[kind],kind }; }) });
+const japanesePairNote = (left: string, right: string, kind: Pair["kind"]) => {
+  if (!hiragana.test(left) && !hiragana.test(right) && !kanji.test(left) && !kanji.test(right)) return notes[kind];
+  if (/[がぎぐげござじずぜぞだぢづでどばびぶべぼぱぴぷぺぽ]/.test(left + right)) return "濁点・半濁点は文字の上側にも黒みをつくります。文字間だけでなく、上部の密度が詰まりすぎたり離れすぎたりしていないかを見ます。";
+  if (/[ぁぃぅぇぉゃゅょっ]/.test(left + right)) return "小書き文字は小さいぶん、前後に白場が生まれやすくなります。文字面の大きさではなく、単語全体の流れが途切れない距離を探します。";
+  if (kanji.test(left) && kanji.test(right)) return "漢字どうしは、画数と内側の白場の量を比べます。四角い文字面の端だけで測らず、並んだときの黒みが均一に見えるよう整えます。";
+  if (kanji.test(left) && hiragana.test(right)) return "漢字の強い黒みに、やわらかなひらがなが続きます。漢字側の密度に引っ張られすぎず、語尾が自然にほどける余白を保ちます。";
+  if (hiragana.test(left) && kanji.test(right)) return "ひらがなの曲線から、文字面の大きい漢字へ切り替わります。境目だけが空いて見えないよう、次の漢字の黒みまで含めて観察します。";
+  if (/[あおこすなぬのはほまもゆよろわ]/.test(left) && /[あおこすなぬのはほまもゆよろわ]/.test(right)) return "曲線の多いひらがなどうしは、実際の距離より白場がふくらんで見えます。輪郭の最も近い場所だけでなく、内側の空きも比べます。";
+  if (/[いうけせたちにねひへめりれ]/.test(left + right)) return "縦線や直線を含むひらがなは、曲線だけの文字より間隔が硬く見えます。線の向きによる白場の偏りをならします。";
+  if (/[ん]/.test(left + right)) return "「ん」は終わりへ向かう丸い量感を持つ文字です。前後を機械的に均等にせず、単語の終わり方が自然に見える余白を探します。";
+  return "ひらがなは曲線が多く、文字ごとに見える余白が揺れます。輪郭の間だけでなく、単語全体のやわらかなリズムを見ます。";
+};
+const englishPairNote = (left: string, right: string, kind: Pair["kind"]) => {
+  if (kind === "space") return notes.space;
+  if (tbar.has(left)) return "Tの横棒は次の文字の上に大きな白場をつくります。横棒の端と次の字形が離れて見えすぎないよう、下側だけでなく上側の余白も見ます。";
+  if (diagonal.has(left) && diagonal.has(right)) return "斜線どうしは三角形の空白をつくるため、数値以上に離れて見えます。斜線の最も近い部分だけでなく、内側へ広がる白場を詰めます。";
+  if (diagonal.has(left) || diagonal.has(right)) return "斜線と直線・丸文字の組み合わせは、片側だけに白場が偏ります。文字の中心ではなく、向かい合う輪郭の量感がそろう位置を探します。";
+  if (round.has(left) && round.has(right)) return "丸文字どうしは輪郭が内側へ退くため、同じ数値でも広く感じられます。外側の端ではなく、丸みが最も近づく部分の余白を比べます。";
+  if (round.has(left) || round.has(right)) return "丸文字と直線的な文字では、左右の余白の性格が異なります。直線の端に合わせるのではなく、丸い輪郭がつくる見かけの空白を整えます。";
+  if (/[ILHENF]/.test(left + right)) return "縦線を中心に持つ文字どうしは、隙間が硬く、機械的に見えやすい組み合わせです。黒い線の間隔だけでなく、単語のリズムが均一かを確認します。";
+  if (/[a-z]/.test(left) !== /[a-z]/.test(right)) return "大文字と小文字では文字面の高さと黒みが変わります。ベースライン付近だけで測らず、上部まで含めた文字の量感をそろえます。";
+  if (/[gjpqy]/.test(left + right)) return "ディセンダーを持つ小文字は、下へ伸びる線が隣接する余白の印象を変えます。下部の動きが窮屈にならないかも見ながら整えます。";
+  return "字形の外形と隣接する余白を比べ、文字列のリズムが均一に感じられる位置へ整えます。";
+};
+const createDrill = (text:string, level:Level): Drill => ({ text, level, pairs:Array.from({length:text.length-1},(_,index) => { const left=text[index], right=text[index+1], kind=classify(left,right); const pair=left+right; const fallback=kind === "space" ? 95 : kind === "diagonal" ? -24 : kind === "tbar" ? -28 : kind === "round" ? -8 : kind === "kana" ? -10 : kind === "kanji" ? -6 : 0; const containsJapanese = hiragana.test(left) || hiragana.test(right) || kanji.test(left) || kanji.test(right); return { index,left,right,target:targetByPair[pair] ?? fallback,note:containsJapanese ? japanesePairNote(left,right,kind) : englishPairNote(left,right,kind),kind }; }) });
 const englishDrills: Drill[] = [
   ...questionBank.beginner.map(text => createDrill(text,"初級")),
   ...questionBank.intermediate.map(text => createDrill(text,"中級")),
