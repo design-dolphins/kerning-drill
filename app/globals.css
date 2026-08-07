@@ -6,7 +6,7 @@
 
 :root { --ink:#171719; --subtle:#6e6e73; --line:#e7e7e7; --blue:#146ef5; --pale:#f7f8fa; }
 * { box-sizing:border-box; }
-body { margin:0; background:#fff; color:var(--ink); font-family: Inter, "Helvetica Neue", Helvetica, Arial, "Noto Sans JP", sans-serif; }
+body { margin:0; background:#fff; color:var(--ink); font-family: "Albert Sans", "Noto Sans JP", "Helvetica Neue", Helvetica, Arial, sans-serif; }
 button, select { font:inherit; }
 button { cursor:pointer; }
 ::selection { background:#d9e9ff; }
