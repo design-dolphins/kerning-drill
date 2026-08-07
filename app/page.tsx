@@ -85,6 +85,7 @@ export default function KerningDrill() {
   const [isReview, setIsReview] = useState(false);
   const [font, setFont] = useState(englishFonts[0]);
   const [values, setValues] = useState<number[]>([]);
+  const [touchedPairs, setTouchedPairs] = useState<boolean[]>([]);
   const [selected, setSelected] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [comparison, setComparison] = useState(0);
@@ -108,6 +109,7 @@ export default function KerningDrill() {
   const init = (next: Drill) => {
     setDrill(next);
     setValues(Array.from({ length: next.text.length - 1 }, (_, index) => isFixedSpace(index, next) ? pairAt(next, index).target : randomInitialKerning()));
+    setTouchedPairs(Array.from({ length: next.text.length - 1 }, () => false));
     setSelected(firstEditablePair(next));
     setCaretVisible(true);
     setShowAnswer(false);
@@ -160,6 +162,7 @@ export default function KerningDrill() {
     if (index < 0 || index >= values.length || isFixedSpace(index)) return;
     setCaretVisible(true);
     setValues(v=>v.map((x,i)=>i===index?Math.max(-150,Math.min(180,Math.round(value))):x));
+    setTouchedPairs(touched => touched.map((wasTouched, i) => i === index ? true : wasTouched));
   };
   useEffect(() => { const handler=(e:KeyboardEvent)=>{ if(screen!=="drill" || !["ArrowLeft","ArrowRight"].includes(e.key)) return; e.preventDefault(); if(e.altKey) { update(selected, values[selected]+(e.key==="ArrowLeft"?-10:10)); return; } const direction=e.key==="ArrowLeft"?-1:1; setCaretVisible(true); setSelected(current => { let next=current+direction; while(next>=0 && next<values.length && isFixedSpace(next)) next+=direction; return Math.max(-1,Math.min(values.length,next)); }); }; window.addEventListener("keydown",handler); return()=>window.removeEventListener("keydown",handler); });
   useEffect(() => {
@@ -197,7 +200,7 @@ export default function KerningDrill() {
     </section>}
     {screen !== "home" && <section className="mx-auto max-w-6xl py-9"><div className="flex items-center justify-between"><div><p className="text-xs font-medium tracking-[.12em] text-[#6e6e73]">{isReview ? "復習" : drill.level} · DRILL　{guidedIndex + 1}/{guidedQueue.length || 12}</p><h2 className="mt-1 text-xl font-medium tracking-[-.03em]">余白を見ながら、文字を選択</h2></div><p className="text-xs text-[#6e6e73]">フォント　<span className="text-[#171719]">{font}</span></p></div>
       <div className="mt-8 min-h-[390px] border-y py-16 hairline"><div className="overflow-x-auto px-2 text-center"><div className="relative inline-block text-left"><KerningText text={drill.text} values={renderedValues} font={font} selected={selected} onSelect={activatePair} drag={drag} update={update} isFixedSpace={isFixedSpace} caretVisible={caretVisible} faded={screen==="result" && comparison>0} />{screen==="result" && <div className="pointer-events-none absolute left-0 top-0 opacity-85"><KerningText text={drill.text} values={targets} font={font} selected={-1} onSelect={()=>{}} drag={drag} update={()=>{}} isFixedSpace={isFixedSpace} caretVisible={false} blue /></div>}</div></div></div>
-      {screen === "drill" ? <div className="mt-7 flex flex-col justify-between gap-7 sm:flex-row sm:items-end"><div>{selected < 0 || selected >= values.length ? <div className="text-sm text-[#6e6e73]">{selected < 0 ? "単語の先頭" : "単語の末尾"}　<span className="text-xs">この位置ではカーニングできません</span></div> : <><div className="flex items-center gap-3 text-sm"><span className="font-medium">{`${drill.text[selected]}${drill.text[selected+1]}`}</span><span className="font-mono text-[#6e6e73]">{values[selected] > 0 ? "+" : ""}{values[selected]}</span><span className="text-xs text-[#6e6e73]">/1000 em</span></div><div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"><input className="track" type="range" min="-150" max="180" value={values[selected]} onChange={e=>update(selected,+e.target.value)} /><span className="hidden text-xs text-[#6e6e73] sm:inline">または <span className="key">⌥</span> + <span className="key">←</span><span className="key">→</span><span className="ml-2">単語間スペースは固定</span></span><span className="text-xs leading-5 text-[#6e6e73] sm:hidden">文字間をタップして、スライダーまたは左右ドラッグで調整</span></div></>}</div><button onClick={submit} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white">採点する <span className="ml-5 text-[#b4b4b8]">→</span></button></div> : <Result drill={drill} values={values} targets={targets} accuracy={accuracy} comparison={comparison} setComparison={setComparison} showAnswer={showAnswer} setShowAnswer={setShowAnswer} next={next} saveCurrentAnswerAsTarget={saveCurrentAnswerAsTarget} restoreTeachingTarget={restoreTeachingTarget} hasCustomTarget={Boolean(customTargets[customTargetKey])} />}</section>}
+      {screen === "drill" ? <div className="mt-7 flex flex-col justify-between gap-7 sm:flex-row sm:items-end"><div>{selected < 0 || selected >= values.length ? <div className="text-sm text-[#6e6e73]">{selected < 0 ? "単語の先頭" : "単語の末尾"}　<span className="text-xs">この位置ではカーニングできません</span></div> : <><div className="flex items-center gap-3 text-sm"><span className="font-medium">{`${drill.text[selected]}${drill.text[selected+1]}`}</span><span className="font-mono text-[#6e6e73]">{touchedPairs[selected] ? <>{values[selected] > 0 ? "+" : ""}{values[selected]}</> : "—"}</span><span className="text-xs text-[#6e6e73]">/1000 em</span></div><div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"><input className="track" type="range" min="-150" max="180" value={values[selected]} onChange={e=>update(selected,+e.target.value)} /><span className="hidden text-xs text-[#6e6e73] sm:inline">または <span className="key">⌥</span> + <span className="key">←</span><span className="key">→</span><span className="ml-2">単語間スペースは固定</span></span><span className="text-xs leading-5 text-[#6e6e73] sm:hidden">文字間をタップして、スライダーまたは左右ドラッグで調整</span></div></>}</div><button onClick={submit} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white">採点する <span className="ml-5 text-[#b4b4b8]">→</span></button></div> : <Result drill={drill} values={values} targets={targets} accuracy={accuracy} comparison={comparison} setComparison={setComparison} showAnswer={showAnswer} setShowAnswer={setShowAnswer} next={next} saveCurrentAnswerAsTarget={saveCurrentAnswerAsTarget} restoreTeachingTarget={restoreTeachingTarget} hasCustomTarget={Boolean(customTargets[customTargetKey])} />}</section>}
   </main>;
 }
 
