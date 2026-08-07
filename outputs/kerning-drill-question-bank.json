@@ -1,6 +1,6 @@
 {
-  "beginner": ["AWE", "AXE", "BOX", "CUP", "DAY", "EYE", "FOX", "GEM", "HAT", "INK", "JAR", "KEY", "LOW", "MAP", "NOD", "OAK", "RED", "SUN", "TOY", "VOW"],
-  "intermediate": ["TYPE", "LOGO", "EDITOR", "DESIGN", "VECTOR", "VISION", "MOTION", "LAYOUT", "SHAPE", "FORM", "SPACE", "BRAND", "STUDIO", "COLOR", "GRID", "POSTER", "PRINT", "OBJECT", "ANGLE", "SCALE"],
-  "advanced": ["TYPOGRAPHY", "ILLUSTRATOR", "INFORMATION", "COMMUNICATION", "IDENTITY", "DIRECTION", "EDITORIAL", "HIERARCHY", "COMPOSITION", "EXPRESSION", "CONTRAST", "RELATIONSHIP", "VISUALIZE", "STRUCTURE", "KERNING", "ALIGNMENT", "PROPORTION", "ARTICULATION", "CONTINUITY", "OBSERVATION"],
+  "beginner": ["Awe", "Axe", "Box", "Cup", "Day", "Eye", "Fox", "Gem", "Hat", "Ink", "Jar", "Key", "Low", "Map", "Nod", "Oak", "Red", "Sun", "Toy", "Vow"],
+  "intermediate": ["Type", "Logo", "Editor", "Design", "Vector", "Vision", "Motion", "Layout", "Shape", "Form", "Space", "Brand", "Studio", "Color", "Grid", "Poster", "Print", "Object", "Angle", "Scale"],
+  "advanced": ["Typography", "Illustrator", "Information", "Communication", "Identity", "Direction", "Editorial", "Hierarchy", "Composition", "Expression", "Contrast", "Relationship", "Visualize", "Structure", "Kerning", "Alignment", "Proportion", "Articulation", "Continuity", "Observation"],
   "expert": ["The Art Book", "Good Sunny Day", "My New Bag", "The Red Cup", "One Blue Sky", "Small Brown Dog", "The Old Map", "Your Key Ring", "Fresh Apple Pie", "Warm Winter Coat", "The Bus Stop", "Our Family Trip", "Sunday Movie Night", "Yellow City Taxi", "The Corner Store", "Quiet Reading Room", "Little Paper Boat", "The Open Window", "Happy Summer Song", "New York City"]
 }
