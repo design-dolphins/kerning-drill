@@ -14,3 +14,4 @@ button { cursor:pointer; }
 .kerning-caret { position:absolute; z-index:2; right:0; top:-.13em; width:2px; height:1.27em; background:var(--blue); box-shadow:0 0 0 1px rgba(255,255,255,.7); pointer-events:none; }
 .track { appearance:none; width:160px; height:2px; background:#d7d7d7; accent-color:var(--ink); }
 .track::-webkit-slider-thumb { width:12px; height:12px; }
+@media (max-width: 639px) { .track { width:100%; } }
