@@ -2,5 +2,11 @@
   "beginner": ["AWE", "AXE", "BOX", "CUP", "DAY", "EYE", "Fox", "Gem", "Hat", "Ink", "Jar", "Key", "Low", "Map", "Nod", "Oak", "Red", "Sun", "Toy", "Vow"],
   "intermediate": ["TYPE", "LOGO", "EDITOR", "DESIGN", "VECTOR", "VISION", "Motion", "Layout", "Shape", "Form", "Space", "Brand", "Studio", "Color", "Grid", "Poster", "Print", "Object", "Angle", "Scale"],
   "advanced": ["TYPOGRAPHY", "ILLUSTRATOR", "INFORMATION", "COMMUNICATION", "IDENTITY", "DIRECTION", "Editorial", "Hierarchy", "Composition", "Expression", "Contrast", "Relationship", "Visualize", "Structure", "Kerning", "Alignment", "Proportion", "Articulation", "Continuity", "Observation"],
-  "expert": ["The Art Book", "Good Sunny Day", "My New Bag", "The Red Cup", "One Blue Sky", "Small Brown Dog", "The Old Map", "Your Key Ring", "Fresh Apple Pie", "Warm Winter Coat", "The Bus Stop", "Our Family Trip", "Sunday Movie Night", "Yellow City Taxi", "The Corner Store", "Quiet Reading Room", "Little Paper Boat", "The Open Window", "Happy Summer Song", "New York City"]
+  "expert": ["The Art Book", "Good Sunny Day", "My New Bag", "The Red Cup", "One Blue Sky", "Small Brown Dog", "The Old Map", "Your Key Ring", "Fresh Apple Pie", "Warm Winter Coat", "The Bus Stop", "Our Family Trip", "Sunday Movie Night", "Yellow City Taxi", "The Corner Store", "Quiet Reading Room", "Little Paper Boat", "The Open Window", "Happy Summer Song", "New York City"],
+  "japanese": {
+    "beginner": ["あさひ", "さくら", "ことば", "たまご", "ひかり", "みどり", "おもい", "やわらか", "きらり", "こころ", "みなと", "こよみ", "つばめ", "はなび", "ゆめみる", "おといろ", "あおぞら", "まどべ", "こもれび", "ひなた"],
+    "intermediate": ["しずく", "ひまわり", "あたたかい", "まなざし", "おだやか", "かがやき", "ふんわり", "やさしい", "たより", "ものがたり", "おくりもの", "あこがれ", "うつくしい", "てのひら", "なつやすみ", "ふゆぞら", "あさごはん", "ひるさがり", "ゆうやけ", "おとずれ"],
+    "advanced": ["日曜日", "美術館", "図書室", "青空市場", "花言葉", "東京駅", "大切な日", "光の色", "森の音", "月明かり", "小さな旅", "言葉の形", "本と珈琲", "春の風", "夏休み", "秋の空", "冬の朝", "静かな場所", "新しい本", "白い紙"],
+    "expert": ["今日はいい日", "駅前の花屋", "青い空の下", "午後の読書", "小さな美術館", "朝のコーヒー", "風と光", "本棚の奥", "海辺の散歩", "雨の日の窓", "木曜日の午後", "手紙を書く", "街角の書店", "音楽の時間", "夜の図書館", "花とことば", "明日の予定", "空想の地図", "日々の記録", "静かな休日"]
+  }
 }
