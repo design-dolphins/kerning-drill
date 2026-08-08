@@ -205,6 +205,15 @@ export default function KerningDrill() {
     setCustomTargets({});
     try { window.localStorage.removeItem("kerning-drill-custom-targets"); } catch { /* 画面内では反映済み */ }
   };
+  const exportCustomTargets = () => {
+    const payload = { app: "Kerning Drill", exportedAt: new Date().toISOString(), targets: customTargets };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "kerning-drill-my-answers.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
   const activatePair = (index: number) => { setSelected(index); setCaretVisible(true); };
   const accuracy = useMemo(() => Math.max(0, 100 - values.reduce((a,v,i)=>a+Math.min(100,Math.abs(v-targets[i]))/targets.length,0)*0.72),[values,targets]);
   const update = (index:number, value:number) => {
@@ -244,7 +253,7 @@ export default function KerningDrill() {
         <p className="mt-5 max-w-md text-sm leading-6 text-[#6e6e73]">文字間の見え方と字形がつくる余白を観察し、カーニング力を鍛える5分間のドリル。</p>
         <div className="mt-6"><p className="mb-3 text-xs font-medium text-[#6e6e73]">文字を選ぶ</p><div className="flex gap-2">{(["英語","日本語"] as Language[]).map(item=><button key={item} onClick={()=>{ setLanguage(item); setFont(item === "英語" ? englishFonts[0] : japaneseFonts[0]); }} className={`border px-4 py-2 text-sm hairline ${language===item?"border-[#171719] bg-[#171719] text-white":"bg-white text-[#505055]"}`}>{item}</button>)}</div><p className="mt-3 text-xs text-[#6e6e73]">{language === "日本語" ? "初級・中級はひらがなのみ。上級から漢字まじりの語句を扱います。" : "英字の字形による余白と、単語全体のリズムを見ます。"}</p></div>
         <div className="mt-7 max-w-xl"><p className="mb-3 text-xs font-medium text-[#6e6e73]">フォントを選ぶ</p><div className="flex flex-wrap gap-2">{availableFonts.map(item=><button key={item} onClick={()=>setFont(item)} style={{fontFamily:item}} className={`border px-4 py-2 text-sm hairline ${font===item ? "border-[#171719] bg-[#171719] text-white" : "bg-white text-[#505055]"}`}>{item}</button>)}</div><p style={{fontFamily:font,fontKerning:"normal"}} className="mt-5 text-4xl leading-none tracking-[-.035em]">{language === "英語" ? "Abcdef" : "あいうえお"}</p><p className="mt-4 text-xs text-[#6e6e73]">初級 → 中級 → 上級 → 超上級を、各3問ずつ出題します。</p></div>
-        <div className="mt-6 flex flex-wrap gap-3"><button onClick={()=>start("おまかせ")} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#3d3d3f]">ドリルを始める <span className="ml-5 text-[#b4b4b8]">⌘ ↵</span></button>{reviewableHistory.length > 0 && <button onClick={startReview} className="border px-5 py-3 text-sm font-medium hairline">苦手を復習</button>}</div>{Object.keys(customTargets).length > 0 && <button onClick={resetAllCustomTargets} className="mt-4 text-xs text-[#6e6e73] underline underline-offset-4">自分の正解をすべてメトリクスに戻す</button>}
+        <div className="mt-6 flex flex-wrap gap-3"><button onClick={()=>start("おまかせ")} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#3d3d3f]">ドリルを始める <span className="ml-5 text-[#b4b4b8]">⌘ ↵</span></button>{reviewableHistory.length > 0 && <button onClick={startReview} className="border px-5 py-3 text-sm font-medium hairline">苦手を復習</button>}</div>{Object.keys(customTargets).length > 0 && <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2"><button onClick={exportCustomTargets} className="text-xs text-[#6e6e73] underline underline-offset-4">自分の正解を出力</button><button onClick={resetAllCustomTargets} className="text-xs text-[#6e6e73] underline underline-offset-4">自分の正解をすべてメトリクスに戻す</button></div>}
       </div>
       <div className="border-l pl-8 hairline"><p className="text-xs font-medium text-[#6e6e73]">今日のフォーカス</p><div className={`mt-7 text-7xl ${language === "英語" ? "font-[Georgia] tracking-[-.1em]" : "font-sans tracking-[-.04em]"}`}>{language === "英語" ? "AV" : "あさひ"}</div><p className="mt-7 text-sm leading-6 text-[#6e6e73]">{language === "英語" ? "斜線の間には、実際の距離より大きく見える三角形の空白があります。" : "ひらがなは曲線が多く、字形によって余白の見え方がゆっくり変化します。"}</p><div className="mt-12 border-t pt-5 hairline"><p className="text-xs text-[#6e6e73]">学習履歴</p><p className="mt-2 text-2xl tracking-[-.03em]">DAY {learningDay}</p>{trouble.length>0&&<p className="mt-4 text-xs text-[#6e6e73]">復習候補：{trouble.join(" · ")}</p>}</div></div>
     </section>}
