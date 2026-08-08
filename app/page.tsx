@@ -85,6 +85,26 @@ const localDateKey = () => { const now = new Date(); return `${now.getFullYear()
 
 const englishFonts = ["Lato", "Poppins", "Libre Baskerville", "Albert Sans"];
 const japaneseFonts = ["Noto Sans JP", "Zen Kaku Gothic New", "BIZ UDPMincho", "Shippori Mincho"];
+const dailyFocus: Record<Language, { sample: string; note: string }[]> = {
+  "英語": [
+    { sample: "AV", note: "斜線の間には、実際の距離より大きく見える三角形の空白があります。" },
+    { sample: "To", note: "Tの横棒と丸いoの間は、上側に余白が残りやすい組み合わせです。" },
+    { sample: "WA", note: "広がるWと斜線のAは、外形の端ではなく内側の白場を見て整えます。" },
+    { sample: "Yo", note: "Yの斜線と丸いoでは、左右に異なる形の余白が生まれます。" },
+    { sample: "Ve", note: "大文字の斜線と小文字の丸みは、文字面の高さも含めて量感を見ます。" },
+    { sample: "LA", note: "Lの直線とAの斜線では、足元だけが開いて見えないように観察します。" },
+    { sample: "Fo", note: "直線的なFと丸いoは、輪郭の近さではなく見かけの白場を比べます。" }
+  ],
+  "日本語": [
+    { sample: "あさひ", note: "曲線と直線を含むひらがなは、文字ごとに余白の性格が変わります。" },
+    { sample: "こもれび", note: "丸みのある文字が続くと、実際より白場がふくらんで見えやすくなります。" },
+    { sample: "たより", note: "縦線をもつ文字と曲線の文字の境目で、リズムが硬くならないように見ます。" },
+    { sample: "ゆうやけ", note: "ゆるやかな曲線が連なる語は、部分ではなく語全体の流れで整えます。" },
+    { sample: "かがやき", note: "濁点を含む文字は上側の黒みも変わるため、上下の密度まで観察します。" },
+    { sample: "森の音", note: "漢字とひらがなの境目では、文字面の大きさの違いによる余白を整えます。" },
+    { sample: "月明かり", note: "画数の異なる漢字とひらがなを、黒みの強さが均一に感じられる位置へ導きます。" }
+  ]
+};
 // 教材として公開する正解。編集モードで書き出された確認済みの値だけをここへ反映します。
 const teachingTargets: Record<string, number[]> = {
   "日本語:Noto Sans JP:やわらか":[1,-27,5], "日本語:Noto Sans JP:ゆめみる":[5,-5,-10], "日本語:Noto Sans JP:おもい":[10,-30], "日本語:Noto Sans JP:あたたかい":[-10,-5,10,0], "日本語:Noto Sans JP:やさしい":[0,-20,-5], "日本語:Noto Sans JP:おくりもの":[5,-95,0,0], "日本語:Noto Sans JP:森の音":[5,-15], "日本語:Noto Sans JP:春の風":[5,-30], "日本語:Noto Sans JP:木曜日の午後":[0,-30,-60,0,0], "日本語:Noto Sans JP:朝のコーヒー":[5,-45,10,-10,5], "日本語:Noto Sans JP:青い空の下":[-5,5,5,-25], "日本語:Noto Sans JP:あさひ":[-5,-5], "日本語:Noto Sans JP:たより":[5,-15], "日本語:Noto Sans JP:ゆうやけ":[-50,-15,0], "日本語:Noto Sans JP:かがやき":[0,5,-20], "日本語:Noto Sans JP:月明かり":[-20,0,-35], "日本語:Noto Sans JP:白い紙":[-30,5], "日本語:Noto Sans JP:小さな美術館":[0,-20,5,0,0], "日本語:Noto Sans JP:こもれび":[-60,0,0], "日本語:Noto Sans JP:まなざし":[-5,5,-15], "日本語:Noto Sans JP:あさごはん":[-15,-35,5,0], "日本語:Noto Sans JP:ふゆぞら":[-5,5,-75], "日本語:Noto Sans JP:花とことば":[5,-65,-65,10], "日本語:Noto Sans JP:夜の図書館":[-15,-5,10,-5],
@@ -124,6 +144,7 @@ export default function KerningDrill() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
   const [editorMode, setEditorMode] = useState(false);
+  const [todayIndex, setTodayIndex] = useState(0);
   const [comparison, setComparison] = useState(0);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [customTargets, setCustomTargets] = useState<Record<string, number[]>>({});
@@ -138,6 +159,7 @@ export default function KerningDrill() {
   useEffect(() => {
     try {
       setEditorMode(new URLSearchParams(window.location.search).get("editor") === "1");
+      setTodayIndex(Number(localDateKey().replaceAll("-", "")));
       const saved = window.localStorage.getItem("kerning-drill-custom-targets");
       if (saved) setCustomTargets(JSON.parse(saved));
       const savedHistory = window.localStorage.getItem("kerning-drill-history");
@@ -250,6 +272,7 @@ export default function KerningDrill() {
   const renderedValues = screen === "result" ? values.map((v,i)=> v+(targets[i]-v)*(comparison/100)) : values;
   const trouble = history.length ? ["斜線の組み合わせ", "T系の横棒", "右側を詰めすぎる傾向"].slice(0,Math.min(3,history.length+1)) : [];
   const learningDay = Math.max(1, new Set(history.map(item => item.date)).size);
+  const todayFocus = dailyFocus[language][todayIndex % dailyFocus[language].length];
 
   return <main className="min-h-screen px-5 py-5 sm:px-10 sm:py-8">
     <header className="mx-auto flex max-w-6xl items-center border-b pb-4 hairline"><button onClick={goHome} aria-label="ホームへ戻る" className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-md bg-[#171719] text-sm font-semibold text-white">K</span><span className="text-[15px] font-medium tracking-[-.01em]">Kerning Drill</span></button></header>
@@ -262,7 +285,7 @@ export default function KerningDrill() {
         <div className="mt-7 max-w-xl"><p className="mb-3 text-xs font-medium text-[#6e6e73]">フォントを選ぶ</p><div className="flex flex-wrap gap-2">{availableFonts.map(item=><button key={item} onClick={()=>setFont(item)} style={{fontFamily:item}} className={`border px-4 py-2 text-sm hairline ${font===item ? "border-[#171719] bg-[#171719] text-white" : "bg-white text-[#505055]"}`}>{item}</button>)}</div><p style={{fontFamily:font,fontKerning:"normal"}} className="mt-5 text-4xl leading-none tracking-[-.035em]">{language === "英語" ? "Abcdef" : "あいうえお"}</p><p className="mt-4 text-xs text-[#6e6e73]">初級 → 中級 → 上級 → 超上級を、各3問ずつ出題します。</p></div>
         <div className="mt-6 flex flex-wrap gap-3"><button onClick={()=>start("おまかせ")} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#3d3d3f]">ドリルを始める <span className="ml-5 text-[#b4b4b8]">⌘ ↵</span></button>{reviewableHistory.length > 0 && <button onClick={startReview} className="border px-5 py-3 text-sm font-medium hairline">苦手を復習</button>}</div>{editorMode && Object.keys(customTargets).length > 0 && <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2"><button onClick={exportCustomTargets} className="text-xs text-[#6e6e73] underline underline-offset-4">自分の正解を出力</button><button onClick={resetAllCustomTargets} className="text-xs text-[#6e6e73] underline underline-offset-4">自分の正解をすべてメトリクスに戻す</button></div>}
       </div>
-      <div className="border-l pl-8 hairline"><p className="text-xs font-medium text-[#6e6e73]">今日のフォーカス</p><div className={`mt-7 text-7xl ${language === "英語" ? "font-[Georgia] tracking-[-.1em]" : "font-sans tracking-[-.04em]"}`}>{language === "英語" ? "AV" : "あさひ"}</div><p className="mt-7 text-sm leading-6 text-[#6e6e73]">{language === "英語" ? "斜線の間には、実際の距離より大きく見える三角形の空白があります。" : "ひらがなは曲線が多く、字形によって余白の見え方がゆっくり変化します。"}</p><div className="mt-12 border-t pt-5 hairline"><p className="text-xs text-[#6e6e73]">学習履歴</p><p className="mt-2 text-2xl tracking-[-.03em]">DAY {learningDay}</p>{trouble.length>0&&<p className="mt-4 text-xs text-[#6e6e73]">復習候補：{trouble.join(" · ")}</p>}</div></div>
+      <div className="border-l pl-8 hairline"><p className="text-xs font-medium text-[#6e6e73]">今日のフォーカス</p><div className={`mt-7 text-7xl ${language === "英語" ? "font-[Georgia] tracking-[-.1em]" : "font-sans tracking-[-.04em]"}`}>{todayFocus.sample}</div><p className="mt-7 text-sm leading-6 text-[#6e6e73]">{todayFocus.note}</p><div className="mt-12 border-t pt-5 hairline"><p className="text-xs text-[#6e6e73]">学習履歴</p><p className="mt-2 text-2xl tracking-[-.03em]">DAY {learningDay}</p>{trouble.length>0&&<p className="mt-4 text-xs text-[#6e6e73]">復習候補：{trouble.join(" · ")}</p>}</div></div>
     </section>}
     {screen !== "home" && <section className="mx-auto max-w-6xl py-9"><div className="flex items-center justify-between"><div><p className="text-xs font-medium tracking-[.12em] text-[#6e6e73]">{isReview ? "復習" : drill.level} · DRILL　{guidedIndex + 1}/{guidedQueue.length || 12}</p><h2 className="mt-1 text-xl font-medium tracking-[-.03em]">余白を見ながら、文字を選択</h2></div><p className="text-xs text-[#6e6e73]">{editorMode && <span className="mr-3 text-[#146ef5]">編集モード</span>}フォント　<span className="text-[#171719]">{font}</span></p></div>
       <div className="mt-8 min-h-[390px] border-y py-16 hairline"><div className="overflow-x-auto px-2 text-center"><div className="relative inline-block text-left"><KerningText text={drill.text} values={renderedValues} font={font} selected={selected} onSelect={activatePair} drag={drag} update={update} isFixedSpace={isFixedSpace} caretVisible={screen === "drill" && caretVisible} faded={screen==="result" && comparison>0} />{(screen==="result" || showMetrics) && <div className="pointer-events-none absolute left-0 top-0 opacity-85"><KerningText text={drill.text} values={targets} font={font} selected={-1} onSelect={()=>{}} drag={drag} update={()=>{}} isFixedSpace={isFixedSpace} caretVisible={false} blue /></div>}</div></div></div>
