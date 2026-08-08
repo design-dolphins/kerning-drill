@@ -85,20 +85,22 @@ const localDateKey = () => { const now = new Date(); return `${now.getFullYear()
 
 const englishFonts = ["Lato", "Poppins", "Libre Baskerville", "Albert Sans"];
 const japaneseFonts = ["Noto Sans JP", "Zen Kaku Gothic New", "BIZ UDPMincho", "Shippori Mincho"];
-const fontAdjustments: Record<string, Partial<Record<Pair["kind"], number>>> = {
-  "Lato": { diagonal: -5, round: -2, tbar: -4 },
-  "Poppins": { diagonal: -10, round: -4, tbar: -6 },
-  "Libre Baskerville": { diagonal: -14, round: -6, tbar: -9, other: -2 },
-  "Albert Sans": { diagonal: -7, round: -3, tbar: -5 },
-  "Noto Sans JP": { kana: -4, kanji: -2 },
-  "Zen Kaku Gothic New": { kana: -7, kanji: -4 },
-  "BIZ UDPMincho": { kana: -10, kanji: -7, other: -2 },
-  "Shippori Mincho": { kana: -12, kanji: -8, other: -3 }
+const metricTargetsForFont = (item: Drill, font: string) => {
+  if (typeof document === "undefined") return Array(item.text.length - 1).fill(0);
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  if (!context) return Array(item.text.length - 1).fill(0);
+  context.font = `1000px "${font}"`;
+  return Array.from({ length: item.text.length - 1 }, (_, index) => {
+    const pair = `${item.text[index]}${item.text[index + 1]}`;
+    if (pair.includes(" ")) return pairAt(item, index).target;
+    context.fontKerning = "none";
+    const withoutKerning = context.measureText(pair).width;
+    context.fontKerning = "normal";
+    const withKerning = context.measureText(pair).width;
+    return Math.round(withKerning - withoutKerning);
+  });
 };
-const teachingTargetsForFont = (item: Drill, font: string) => Array.from({ length: item.text.length - 1 }, (_, index) => {
-  const pair = pairAt(item, index);
-  return pair.target + (fontAdjustments[font]?.[pair.kind] ?? 0);
-});
 const pairAt = (drill: Drill, index: number) => drill.pairs.find(p => (p.index ?? drill.text.indexOf(p.left + p.right)) === index) ?? { index, left:drill.text[index], right:drill.text[index + 1], target:0, note:notes.other, kind:"other" as const };
 
 export default function KerningDrill() {
@@ -112,6 +114,7 @@ export default function KerningDrill() {
   const [font, setFont] = useState(englishFonts[0]);
   const [values, setValues] = useState<number[]>([]);
   const [touchedPairs, setTouchedPairs] = useState<boolean[]>([]);
+  const [metricTargets, setMetricTargets] = useState<number[]>([]);
   const [selected, setSelected] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [comparison, setComparison] = useState(0);
@@ -133,6 +136,18 @@ export default function KerningDrill() {
       if (savedHistory) setHistory(JSON.parse(savedHistory).map((entry: HistoryEntry) => ({ ...entry, date: entry.date ?? localDateKey() })));
     } catch { /* 保存できない環境では通常の正解を使う */ }
   }, []);
+  useEffect(() => {
+    let cancelled = false;
+    const measure = () => {
+      if (!cancelled) setMetricTargets(metricTargetsForFont(drill, font));
+    };
+    if (typeof document !== "undefined" && document.fonts) {
+      document.fonts.load(`1000px "${font}"`, drill.text).then(measure).catch(measure);
+    } else {
+      measure();
+    }
+    return () => { cancelled = true; };
+  }, [drill, font]);
   const init = (next: Drill) => {
     setDrill(next);
     setValues(Array.from({ length: next.text.length - 1 }, (_, index) => isFixedSpace(index, next) ? pairAt(next, index).target : randomInitialKerning()));
@@ -171,7 +186,7 @@ export default function KerningDrill() {
     init(queue[0]);
   };
   const customTargetKey = `${language}:${font}:${drill.text}`;
-  const targets = useMemo(() => customTargets[customTargetKey]?.length === drill.text.length - 1 ? customTargets[customTargetKey] : teachingTargetsForFont(drill, font), [drill, font, customTargets, customTargetKey]);
+  const targets = useMemo(() => customTargets[customTargetKey]?.length === drill.text.length - 1 ? customTargets[customTargetKey] : metricTargets.length === drill.text.length - 1 ? metricTargets : Array(drill.text.length - 1).fill(0), [drill, metricTargets, customTargets, customTargetKey]);
   const saveCurrentAnswerAsTarget = () => {
     const next = { ...customTargets, [customTargetKey]: [...values] };
     setCustomTargets(next);
@@ -194,7 +209,7 @@ export default function KerningDrill() {
   useEffect(() => { const handler=(e:KeyboardEvent)=>{ if(screen!=="drill" || !["ArrowLeft","ArrowRight"].includes(e.key)) return; e.preventDefault(); if(e.altKey) { update(selected, values[selected]+(e.key==="ArrowLeft"?-10:10)); return; } const direction=e.key==="ArrowLeft"?-1:1; setCaretVisible(true); setSelected(current => { let next=current+direction; while(next>=0 && next<values.length && isFixedSpace(next)) next+=direction; return Math.max(-1,Math.min(values.length,next)); }); }; window.addEventListener("keydown",handler); return()=>window.removeEventListener("keydown",handler); });
   useEffect(() => {
     if (screen !== "drill" || !caretVisible) return;
-    const timer = window.setTimeout(() => setCaretVisible(false), 2000);
+    const timer = window.setTimeout(() => setCaretVisible(false), 1000);
     return () => window.clearTimeout(timer);
   }, [screen, selected, values, caretVisible]);
   const submit = () => { const entry = { drill, values, accuracy, date: localDateKey() }; setHistory(h => { const next = [...h, entry]; try { window.localStorage.setItem("kerning-drill-history", JSON.stringify(next)); } catch { /* 保存できない環境では画面内の履歴を使う */ } return next; }); setScreen("result"); };
@@ -227,7 +242,7 @@ export default function KerningDrill() {
       <div className="border-l pl-8 hairline"><p className="text-xs font-medium text-[#6e6e73]">今日のフォーカス</p><div className={`mt-7 text-7xl ${language === "英語" ? "font-[Georgia] tracking-[-.1em]" : "font-sans tracking-[-.04em]"}`}>{language === "英語" ? "AV" : "あさひ"}</div><p className="mt-7 text-sm leading-6 text-[#6e6e73]">{language === "英語" ? "斜線の間には、実際の距離より大きく見える三角形の空白があります。" : "ひらがなは曲線が多く、字形によって余白の見え方がゆっくり変化します。"}</p><div className="mt-12 border-t pt-5 hairline"><p className="text-xs text-[#6e6e73]">学習履歴</p><p className="mt-2 text-2xl tracking-[-.03em]">DAY {learningDay}</p>{trouble.length>0&&<p className="mt-4 text-xs text-[#6e6e73]">復習候補：{trouble.join(" · ")}</p>}</div></div>
     </section>}
     {screen !== "home" && <section className="mx-auto max-w-6xl py-9"><div className="flex items-center justify-between"><div><p className="text-xs font-medium tracking-[.12em] text-[#6e6e73]">{isReview ? "復習" : drill.level} · DRILL　{guidedIndex + 1}/{guidedQueue.length || 12}</p><h2 className="mt-1 text-xl font-medium tracking-[-.03em]">余白を見ながら、文字を選択</h2></div><p className="text-xs text-[#6e6e73]">フォント　<span className="text-[#171719]">{font}</span></p></div>
-      <div className="mt-8 min-h-[390px] border-y py-16 hairline"><div className="overflow-x-auto px-2 text-center"><div className="relative inline-block text-left"><KerningText text={drill.text} values={renderedValues} font={font} selected={selected} onSelect={activatePair} drag={drag} update={update} isFixedSpace={isFixedSpace} caretVisible={caretVisible} faded={screen==="result" && comparison>0} />{screen==="result" && <div className="pointer-events-none absolute left-0 top-0 opacity-85"><KerningText text={drill.text} values={targets} font={font} selected={-1} onSelect={()=>{}} drag={drag} update={()=>{}} isFixedSpace={isFixedSpace} caretVisible={false} blue /></div>}</div></div></div>
+      <div className="mt-8 min-h-[390px] border-y py-16 hairline"><div className="overflow-x-auto px-2 text-center"><div className="relative inline-block text-left"><KerningText text={drill.text} values={renderedValues} font={font} selected={selected} onSelect={activatePair} drag={drag} update={update} isFixedSpace={isFixedSpace} caretVisible={screen === "drill" && caretVisible} faded={screen==="result" && comparison>0} />{screen==="result" && <div className="pointer-events-none absolute left-0 top-0 opacity-85"><KerningText text={drill.text} values={targets} font={font} selected={-1} onSelect={()=>{}} drag={drag} update={()=>{}} isFixedSpace={isFixedSpace} caretVisible={false} blue /></div>}</div></div></div>
       {screen === "drill" ? <div className="mt-7 flex flex-col justify-between gap-7 sm:flex-row sm:items-end"><div>{selected < 0 || selected >= values.length ? <div className="text-sm text-[#6e6e73]">{selected < 0 ? "単語の先頭" : "単語の末尾"}　<span className="text-xs">この位置ではカーニングできません</span></div> : <><div className="flex items-center gap-3 text-sm"><span className="font-medium">{`${drill.text[selected]}${drill.text[selected+1]}`}</span><span className="font-mono text-[#6e6e73]">{touchedPairs[selected] ? <>{values[selected] > 0 ? "+" : ""}{values[selected]}</> : "—"}</span><span className="text-xs text-[#6e6e73]">/1000 em</span></div><div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"><input className="track" type="range" min="-150" max="180" value={values[selected]} onChange={e=>update(selected,+e.target.value)} /><span className="hidden text-xs text-[#6e6e73] sm:inline">または <span className="key">⌥</span> + <span className="key">←</span><span className="key">→</span><span className="ml-2">単語間スペースは固定</span></span><span className="text-xs leading-5 text-[#6e6e73] sm:hidden">文字間をタップして、スライダーまたは左右ドラッグで調整</span></div></>}</div><button onClick={submit} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white">採点する <span className="ml-5 text-[#b4b4b8]">→</span></button></div> : <Result drill={drill} values={values} targets={targets} accuracy={accuracy} comparison={comparison} setComparison={setComparison} showAnswer={showAnswer} setShowAnswer={setShowAnswer} next={next} saveCurrentAnswerAsTarget={saveCurrentAnswerAsTarget} restoreTeachingTarget={restoreTeachingTarget} hasCustomTarget={Boolean(customTargets[customTargetKey])} />}</section>}
   </main>;
 }
