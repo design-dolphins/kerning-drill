@@ -117,6 +117,7 @@ export default function KerningDrill() {
   const [metricTargets, setMetricTargets] = useState<number[]>([]);
   const [selected, setSelected] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [showMetrics, setShowMetrics] = useState(false);
   const [comparison, setComparison] = useState(0);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [customTargets, setCustomTargets] = useState<Record<string, number[]>>({});
@@ -155,6 +156,7 @@ export default function KerningDrill() {
     setSelected(firstEditablePair(next));
     setCaretVisible(true);
     setShowAnswer(false);
+    setShowMetrics(false);
     setComparison(0);
     setScreen("drill");
   };
@@ -198,6 +200,11 @@ export default function KerningDrill() {
     setCustomTargets(next);
     try { window.localStorage.setItem("kerning-drill-custom-targets", JSON.stringify(next)); } catch { /* 画面内では反映済み */ }
   };
+  const resetAllCustomTargets = () => {
+    if (!window.confirm("保存した自分の正解をすべて削除し、メトリクス基準へ戻します。よろしいですか？")) return;
+    setCustomTargets({});
+    try { window.localStorage.removeItem("kerning-drill-custom-targets"); } catch { /* 画面内では反映済み */ }
+  };
   const activatePair = (index: number) => { setSelected(index); setCaretVisible(true); };
   const accuracy = useMemo(() => Math.max(0, 100 - values.reduce((a,v,i)=>a+Math.min(100,Math.abs(v-targets[i]))/targets.length,0)*0.72),[values,targets]);
   const update = (index:number, value:number) => {
@@ -213,7 +220,7 @@ export default function KerningDrill() {
     return () => window.clearTimeout(timer);
   }, [screen, selected, values, caretVisible]);
   const submit = () => { const entry = { drill, values, accuracy, date: localDateKey() }; setHistory(h => { const next = [...h, entry]; try { window.localStorage.setItem("kerning-drill-history", JSON.stringify(next)); } catch { /* 保存できない環境では画面内の履歴を使う */ } return next; }); setScreen("result"); };
-  const goHome = () => { setScreen("home"); setShowAnswer(false); setCaretVisible(false); };
+  const goHome = () => { setScreen("home"); setShowAnswer(false); setShowMetrics(false); setCaretVisible(false); };
   const next = () => {
     if (choice === "おまかせ" && guidedIndex < guidedQueue.length - 1) {
       const nextIndex = guidedIndex + 1;
@@ -237,12 +244,13 @@ export default function KerningDrill() {
         <p className="mt-5 max-w-md text-sm leading-6 text-[#6e6e73]">文字間の見え方と字形がつくる余白を観察し、カーニング力を鍛える5分間のドリル。</p>
         <div className="mt-6"><p className="mb-3 text-xs font-medium text-[#6e6e73]">文字を選ぶ</p><div className="flex gap-2">{(["英語","日本語"] as Language[]).map(item=><button key={item} onClick={()=>{ setLanguage(item); setFont(item === "英語" ? englishFonts[0] : japaneseFonts[0]); }} className={`border px-4 py-2 text-sm hairline ${language===item?"border-[#171719] bg-[#171719] text-white":"bg-white text-[#505055]"}`}>{item}</button>)}</div><p className="mt-3 text-xs text-[#6e6e73]">{language === "日本語" ? "初級・中級はひらがなのみ。上級から漢字まじりの語句を扱います。" : "英字の字形による余白と、単語全体のリズムを見ます。"}</p></div>
         <div className="mt-7 max-w-xl"><p className="mb-3 text-xs font-medium text-[#6e6e73]">フォントを選ぶ</p><div className="flex flex-wrap gap-2">{availableFonts.map(item=><button key={item} onClick={()=>setFont(item)} style={{fontFamily:item}} className={`border px-4 py-2 text-sm hairline ${font===item ? "border-[#171719] bg-[#171719] text-white" : "bg-white text-[#505055]"}`}>{item}</button>)}</div><p style={{fontFamily:font,fontKerning:"normal"}} className="mt-5 text-4xl leading-none tracking-[-.035em]">{language === "英語" ? "Abcdef" : "あいうえお"}</p><p className="mt-4 text-xs text-[#6e6e73]">初級 → 中級 → 上級 → 超上級を、各3問ずつ出題します。</p></div>
-        <div className="mt-6 flex flex-wrap gap-3"><button onClick={()=>start("おまかせ")} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#3d3d3f]">ドリルを始める <span className="ml-5 text-[#b4b4b8]">⌘ ↵</span></button>{reviewableHistory.length > 0 && <button onClick={startReview} className="border px-5 py-3 text-sm font-medium hairline">苦手を復習</button>}</div>
+        <div className="mt-6 flex flex-wrap gap-3"><button onClick={()=>start("おまかせ")} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#3d3d3f]">ドリルを始める <span className="ml-5 text-[#b4b4b8]">⌘ ↵</span></button>{reviewableHistory.length > 0 && <button onClick={startReview} className="border px-5 py-3 text-sm font-medium hairline">苦手を復習</button>}</div>{Object.keys(customTargets).length > 0 && <button onClick={resetAllCustomTargets} className="mt-4 text-xs text-[#6e6e73] underline underline-offset-4">自分の正解をすべてメトリクスに戻す</button>}
       </div>
       <div className="border-l pl-8 hairline"><p className="text-xs font-medium text-[#6e6e73]">今日のフォーカス</p><div className={`mt-7 text-7xl ${language === "英語" ? "font-[Georgia] tracking-[-.1em]" : "font-sans tracking-[-.04em]"}`}>{language === "英語" ? "AV" : "あさひ"}</div><p className="mt-7 text-sm leading-6 text-[#6e6e73]">{language === "英語" ? "斜線の間には、実際の距離より大きく見える三角形の空白があります。" : "ひらがなは曲線が多く、字形によって余白の見え方がゆっくり変化します。"}</p><div className="mt-12 border-t pt-5 hairline"><p className="text-xs text-[#6e6e73]">学習履歴</p><p className="mt-2 text-2xl tracking-[-.03em]">DAY {learningDay}</p>{trouble.length>0&&<p className="mt-4 text-xs text-[#6e6e73]">復習候補：{trouble.join(" · ")}</p>}</div></div>
     </section>}
     {screen !== "home" && <section className="mx-auto max-w-6xl py-9"><div className="flex items-center justify-between"><div><p className="text-xs font-medium tracking-[.12em] text-[#6e6e73]">{isReview ? "復習" : drill.level} · DRILL　{guidedIndex + 1}/{guidedQueue.length || 12}</p><h2 className="mt-1 text-xl font-medium tracking-[-.03em]">余白を見ながら、文字を選択</h2></div><p className="text-xs text-[#6e6e73]">フォント　<span className="text-[#171719]">{font}</span></p></div>
-      <div className="mt-8 min-h-[390px] border-y py-16 hairline"><div className="overflow-x-auto px-2 text-center"><div className="relative inline-block text-left"><KerningText text={drill.text} values={renderedValues} font={font} selected={selected} onSelect={activatePair} drag={drag} update={update} isFixedSpace={isFixedSpace} caretVisible={screen === "drill" && caretVisible} faded={screen==="result" && comparison>0} />{screen==="result" && <div className="pointer-events-none absolute left-0 top-0 opacity-85"><KerningText text={drill.text} values={targets} font={font} selected={-1} onSelect={()=>{}} drag={drag} update={()=>{}} isFixedSpace={isFixedSpace} caretVisible={false} blue /></div>}</div></div></div>
+      <div className="mt-8 min-h-[390px] border-y py-16 hairline"><div className="overflow-x-auto px-2 text-center"><div className="relative inline-block text-left"><KerningText text={drill.text} values={renderedValues} font={font} selected={selected} onSelect={activatePair} drag={drag} update={update} isFixedSpace={isFixedSpace} caretVisible={screen === "drill" && caretVisible} faded={screen==="result" && comparison>0} />{(screen==="result" || showMetrics) && <div className="pointer-events-none absolute left-0 top-0 opacity-85"><KerningText text={drill.text} values={targets} font={font} selected={-1} onSelect={()=>{}} drag={drag} update={()=>{}} isFixedSpace={isFixedSpace} caretVisible={false} blue /></div>}</div></div></div>
+      {screen === "drill" && <div className="mt-5 flex flex-wrap items-center gap-3"><button onClick={()=>setShowMetrics(!showMetrics)} className="border px-4 py-2 text-sm font-medium hairline">{showMetrics ? "メトリクスを隠す" : "メトリクスを見る"}</button>{showMetrics && selected >= 0 && selected < targets.length && <p className="text-xs text-[#146ef5]">メトリクス　{targets[selected] > 0 ? "+" : ""}{targets[selected]} /1000 em</p>}</div>}
       {screen === "drill" ? <div className="mt-7 flex flex-col justify-between gap-7 sm:flex-row sm:items-end"><div>{selected < 0 || selected >= values.length ? <div className="text-sm text-[#6e6e73]">{selected < 0 ? "単語の先頭" : "単語の末尾"}　<span className="text-xs">この位置ではカーニングできません</span></div> : <><div className="flex items-center gap-3 text-sm"><span className="font-medium">{`${drill.text[selected]}${drill.text[selected+1]}`}</span><span className="font-mono text-[#6e6e73]">{touchedPairs[selected] ? <>{values[selected] > 0 ? "+" : ""}{values[selected]}</> : "—"}</span><span className="text-xs text-[#6e6e73]">/1000 em</span></div><div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"><input className="track" type="range" min="-150" max="180" value={values[selected]} onChange={e=>update(selected,+e.target.value)} /><span className="hidden text-xs text-[#6e6e73] sm:inline">または <span className="key">⌥</span> + <span className="key">←</span><span className="key">→</span><span className="ml-2">単語間スペースは固定</span></span><span className="text-xs leading-5 text-[#6e6e73] sm:hidden">文字間をタップして、スライダーまたは左右ドラッグで調整</span></div></>}</div><button onClick={submit} className="bg-[#171719] px-5 py-3 text-sm font-medium text-white">採点する <span className="ml-5 text-[#b4b4b8]">→</span></button></div> : <Result drill={drill} values={values} targets={targets} accuracy={accuracy} comparison={comparison} setComparison={setComparison} showAnswer={showAnswer} setShowAnswer={setShowAnswer} next={next} saveCurrentAnswerAsTarget={saveCurrentAnswerAsTarget} restoreTeachingTarget={restoreTeachingTarget} hasCustomTarget={Boolean(customTargets[customTargetKey])} />}</section>}
   </main>;
 }
